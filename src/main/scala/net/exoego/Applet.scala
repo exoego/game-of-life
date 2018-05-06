@@ -138,19 +138,16 @@ class Applet extends PApplet {
 
     for {
       (x, y) <- iterate()
-    } { // And visit all the neighbours of each cell
-      var neighbours = 0; // We'll count the neighbours
+    } {
+      var neighbours = 0
 
       for {
         xx <- x - 1 to x + 1 if xx >= 0 && xx < rows
-        yy <- y - 1 to y + 1 if yy >= 0 && yy < cols
+        yy <- y - 1 to y + 1 if yy >= 0 && yy < cols && !(xx == x && yy == y)
       } {
-        // Make sure to to check against self
-        if (!((xx == x) && (yy == y))) {
-          // Check alive neighbours and count them
-          if (cellsBuffer(xx)(yy) == 1) {
-            neighbours += 1
-          }
+        // Check alive neighbours and count them
+        if (cellsBuffer(xx)(yy) == 1) {
+          neighbours += 1
         }
       }
 
