@@ -62,6 +62,41 @@ class Applet extends PApplet {
   }
 
   override def draw(): Unit = {
+    drawCell()
+
+    if (!paused) {
+      iteration()
+    }
+
+    if (paused && mousePressed) {
+      toggleCellStateByMouseClick()
+    } else if (paused && !mousePressed) {
+      saveCells()
+    }
+  }
+
+  private def toggleCellStateByMouseClick(): Unit = {
+    // Map and avoid out of bound errors
+    val xCellOver = {
+      val cellOver = map(mouseX.toFloat, 0f, width.toFloat, 0f, rows_.toFloat).toInt
+      constrain(cellOver, 0, rows_ - 1)
+    }
+    val yCellOver = {
+      val cellOver = map(mouseY.toFloat, 0f, height.toFloat, 0f, cols_.toFloat).toInt
+      constrain(cellOver, 0, cols_ - 1)
+    }
+
+    // Check against cells in buffer
+    if (cellsBuffer(xCellOver)(yCellOver) == 1) {
+      cells(xCellOver)(yCellOver) = 0
+      fill(dead)
+    } else { // Cell is dead
+      cells(xCellOver)(yCellOver) = 1
+      fill(alive)
+    }
+  }
+
+  private def drawCell() = {
     for {
       (x, y) <- iterate()
     } {
@@ -71,34 +106,6 @@ class Applet extends PApplet {
         fill(dead); // If dead
       }
       rect((x * cellSize).toFloat, (y * cellSize).toFloat, cellSize, cellSize)
-    }
-
-    if (!paused) {
-      iteration()
-    }
-
-    // Create  new cells manually on pause
-    if (paused && mousePressed) {
-      // Map and avoid out of bound errors
-      val xCellOver = {
-        val cellOver = map(mouseX.toFloat, 0f, width.toFloat, 0f, rows_.toFloat).toInt
-        constrain(cellOver, 0, rows_ - 1)
-      }
-      val yCellOver = {
-        val cellOver = map(mouseY.toFloat, 0f, height.toFloat, 0f, cols_.toFloat).toInt
-        constrain(cellOver, 0, cols_ - 1)
-      }
-
-      // Check against cells in buffer
-      if (cellsBuffer(xCellOver)(yCellOver) == 1) {
-        cells(xCellOver)(yCellOver) = 0
-        fill(dead)
-      } else { // Cell is dead
-        cells(xCellOver)(yCellOver) = 1
-        fill(alive)
-      }
-    } else if (paused && !mousePressed) { // And then save to buffer once mouse goes up
-      saveCells()
     }
   }
 
@@ -111,13 +118,12 @@ class Applet extends PApplet {
     }
   }
 
-  def iteration(): Unit = { // When the clock ticks
+  def iteration(): Unit = {
     val rows = rows_
     val cols = cols_
 
     saveCells()
 
-    // Visit each cell:
     for {
       (x, y) <- iterate()
     } { // And visit all the neighbours of each cell
