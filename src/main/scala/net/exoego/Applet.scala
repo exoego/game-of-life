@@ -7,19 +7,15 @@ import processing.core.PConstants._
 import scala.util.Random
 
 class Applet extends PApplet {
-
   val title = "Game of Life"
 
   private final val rand: Random = new Random(java.security.SecureRandom.getInstanceStrong)
 
   private final val cellSize                  = 5
   private final val probabilityOfAliveAtStart = 15
-  private final val interval                  = 16
 
   private final val alive = color(0, 200, 0)
   private final val dead  = color(0)
-
-  private var lastRecordedTime = 0
 
   private var cells: Array[Array[Int]] = Array.empty
   // Buffer to record the state of the cells and use this while changing the others in the interations
@@ -33,6 +29,8 @@ class Applet extends PApplet {
   }
 
   override def setup(): Unit = {
+    frameRate(30)
+
     val rows: Int = width / cellSize
     val cols: Int = height / cellSize
 
@@ -94,12 +92,8 @@ class Applet extends PApplet {
       rect((x * cellSize).toFloat, (y * cellSize).toFloat, cellSize, cellSize);
     }
 
-    // Iterate if timer ticks
-    if (millis() - lastRecordedTime > interval) {
-      if (!paused) {
-        iteration()
-        lastRecordedTime = millis()
-      }
+    if (!paused) {
+      iteration()
     }
 
     // Create  new cells manually on pause
