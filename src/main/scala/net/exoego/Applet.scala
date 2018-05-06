@@ -117,13 +117,16 @@ class Applet extends PApplet {
         fill(alive)
       }
     } else if (paused && !mousePressed) { // And then save to buffer once mouse goes up
-      // Save cells to buffer (so we opeate with one array keeping the other intact)
+      saveCells()
+    }
+  }
 
-      for {
-        (x, y) <- iterate
-      } {
-        cellsBuffer(x)(y) = cells(x)(y)
-      }
+  private def saveCells(): Unit = {
+    // Save cells to buffer (so we opeate with one array keeping the other intact)
+    for {
+      (x, y) <- iterate()
+    } {
+      cellsBuffer(x)(y) = cells(x)(y)
     }
   }
 
@@ -131,12 +134,7 @@ class Applet extends PApplet {
     val rows = rows_
     val cols = cols_
 
-    // Save cells to buffer (so we opeate with one array keeping the other intact)
-    for {
-      (x, y) <- iterate()
-    } {
-      cellsBuffer(x)(y) = cells(x)(y)
-    }
+    saveCells()
 
     // Visit each cell:
     for {
