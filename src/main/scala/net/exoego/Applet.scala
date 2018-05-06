@@ -182,21 +182,22 @@ class Applet extends PApplet {
     }
 
   override def keyPressed(): Unit = {
-    if (key == 'r' || key == 'R') {
-      initializeCells()
-    }
-
-    if (key == ' ') { // On/off of pause
-      paused = !paused
-
-    }
-    if (key == 'c' || key == 'C') { // Clear all
-      for {
-        (x, y) <- iterate()
-      } {
-        cells(x)(y) = DEAD
-      }
+    key match {
+      case 'r' | 'R' => initializeCells()
+      case ' '       => togglePause()
+      case 'c' | 'C' => clearAllCells()
     }
   }
 
+  private def togglePause(): Unit = {
+    paused = !paused
+  }
+
+  private def clearAllCells(): Unit = {
+    for {
+      (x, y) <- iterate()
+    } {
+      cells(x)(y) = DEAD
+    }
+  }
 }
