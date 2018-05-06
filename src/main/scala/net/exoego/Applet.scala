@@ -11,11 +11,11 @@ class Applet extends PApplet {
 
   private final val rand: Random = new Random(java.security.SecureRandom.getInstanceStrong)
 
-  private final val cellSize = 5
+  private final val cellSize                  = 5
   private final val probabilityOfAliveAtStart = 15
 
   private final val alive = color(248, 221, 140)
-  private final val dead = color(0)
+  private final val dead  = color(0)
 
   private var cells: Array[Array[Int]] = Array.empty
   // Buffer to record the state of the cells and use this while changing the others in the interations
@@ -40,16 +40,8 @@ class Applet extends PApplet {
     val cols = cols_
 
     // Instantiate arrays
-    cells = Array.fill(rows) {
-      Array.fill(cols) {
-        0
-      }
-    }
-    cellsBuffer = Array.fill(rows) {
-      Array.fill(cols) {
-        0
-      }
-    }
+    cells = Array.ofDim(rows, cols)
+    cellsBuffer = Array.ofDim(rows, cols)
 
     // This stroke will draw the background grid
     stroke(48)
