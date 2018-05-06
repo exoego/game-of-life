@@ -65,10 +65,13 @@ class Applet extends PApplet {
     background(0)
   }
 
-  private def iterate(): Iterator[(Int, Int)] = {
+  private def coordinatesRows(): Iterator[Int] = (0 until rows_).iterator
+  private def coordinatesCols(): Iterator[Int] = (0 until cols_).iterator
+
+  private def coordinates(): Iterator[(Int, Int)] = {
     for {
-      x <- (0 until rows_).iterator
-      y <- (0 until cols_).iterator
+      x <- coordinatesRows()
+      y <- coordinatesCols()
     } yield {
       (x, y)
     }
@@ -111,7 +114,7 @@ class Applet extends PApplet {
 
   private def drawCell() = {
     for {
-      (x, y) <- iterate()
+      (x, y) <- coordinates()
     } {
       if (cells(x)(y) == ALIVE) {
         fill(COLOR_ALIVE)
@@ -125,7 +128,7 @@ class Applet extends PApplet {
   private def saveCells(): Unit = {
     // Save cells to buffer (so we opeate with one array keeping the other intact)
     for {
-      (x, y) <- iterate()
+      (x, y) <- coordinates()
     } {
       cellsBuffer(x)(y) = cells(x)(y)
     }
@@ -135,7 +138,7 @@ class Applet extends PApplet {
     saveCells()
 
     for {
-      (x, y) <- iterate()
+      (x, y) <- coordinates()
     } {
       val neighbours   = countNeighbours(x, y)
       val currentState = cellsBuffer(x)(y)
@@ -168,7 +171,7 @@ class Applet extends PApplet {
 
   private def initializeCells(): Unit = {
     for {
-      (x, y) <- iterate()
+      (x, y) <- coordinates()
     } {
       cells(x)(y) = generateCell()
     }
@@ -195,7 +198,7 @@ class Applet extends PApplet {
 
   private def clearAllCells(): Unit = {
     for {
-      (x, y) <- iterate()
+      (x, y) <- coordinates()
     } {
       cells(x)(y) = DEAD
     }
