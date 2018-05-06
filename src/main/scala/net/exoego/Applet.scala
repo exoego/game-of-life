@@ -14,7 +14,7 @@ class Applet extends PApplet {
   private final val cellSize                  = 5
   private final val probabilityOfAliveAtStart = 15
 
-  private final val alive = color(0, 200, 0)
+  private final val alive = color(248, 221, 140)
   private final val dead  = color(0)
 
   private var cells: Array[Array[Int]] = Array.empty
@@ -24,7 +24,7 @@ class Applet extends PApplet {
   private var paused: Boolean = false
 
   override def settings(): Unit = {
-    size(640, 360, JAVA2D)
+    size(720, 720, JAVA2D)
     noSmooth()
   }
 
