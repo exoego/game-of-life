@@ -9,6 +9,9 @@ import scala.util.Random
 class Applet extends PApplet {
   val title = "Game of Life"
 
+  private final val DEAD: Int  = 0
+  private final val ALIVE: Int = 1
+
   private final val rand: Random = new Random(java.security.SecureRandom.getInstanceStrong)
 
   private final val cellSize                  = 5
@@ -100,10 +103,10 @@ class Applet extends PApplet {
 
     // Check against cells in buffer
     if (cellsBuffer(xCellOver)(yCellOver) == 1) {
-      cells(xCellOver)(yCellOver) = 0
+      cells(xCellOver)(yCellOver) = DEAD
       fill(dead)
     } else { // Cell is dead
-      cells(xCellOver)(yCellOver) = 1
+      cells(xCellOver)(yCellOver) = ALIVE
       fill(alive)
     }
   }
@@ -151,16 +154,15 @@ class Applet extends PApplet {
         }
       }
 
-      // We've checked the neigbours: apply rules!
-      if (cellsBuffer(x)(y) == 1) { // The cell is alive: kill it if necessary
+      if (cellsBuffer(x)(y) == ALIVE) {
         if (neighbours < 2 || neighbours > 3) {
-          cells(x)(y) = 0; // Die unless it has 2 or 3 neighbours
+          cells(x)(y) = DEAD
         }
-      } else { // The cell is dead: make it live if necessary
+      } else {
         if (neighbours == 3) {
-          cells(x)(y) = 1; // Only if it has 3 neighbours
+          cells(x)(y) = ALIVE
         }
-      } // End of if
+      }
     }
   }
 
@@ -174,9 +176,9 @@ class Applet extends PApplet {
 
   private def generateCell(): Int =
     if (rand.nextInt(100) > probabilityOfAliveAtStart) {
-      0
+      DEAD
     } else {
-      1
+      ALIVE
     }
 
   override def keyPressed(): Unit = {
@@ -192,7 +194,7 @@ class Applet extends PApplet {
       for {
         (x, y) <- iterate()
       } {
-        cells(x)(y) = 0 // Save all to zero
+        cells(x)(y) = DEAD
       }
     }
   }
