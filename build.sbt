@@ -8,14 +8,9 @@ scalaVersion := "2.12.6"
 
 libraryDependencies ++= Dependencies.processing ++ Dependencies.tests
 
-scalacOptions ++= ScalacOptions.standards ++ ScalacOptions.advanced ++ ScalacOptions.warnings
-
-// Doctest setup
-doctestTestFramework := DoctestTestFramework.ScalaTest
-
-wartremoverErrors in (Compile, compile) ++= Warts.unsafe
-
 scalafmtOnCompile := true
+
+scalacOptions ++= ScalacOptions.standards ++ ScalacOptions.advanced ++ ScalacOptions.warnings
 
 scalacOptions in (Compile, console) ~= (_.filterNot(
   Set(
