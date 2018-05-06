@@ -6,7 +6,7 @@ organization := "net.exoego"
 
 scalaVersion := "2.12.6"
 
-libraryDependencies ++= Dependencies.tests
+libraryDependencies ++= Dependencies.processing ++ Dependencies.tests
 
 scalacOptions ++= ScalacOptions.standards ++ ScalacOptions.advanced ++ ScalacOptions.warnings
 

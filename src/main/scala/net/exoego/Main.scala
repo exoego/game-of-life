@@ -1,25 +1,11 @@
 package net.exoego
 
+import processing.core.PApplet
+
 object Main {
+
   def main(args: Array[String]): Unit = {
-    println("Hello World!!!")
+    PApplet.main("net.exoego.Applet")
   }
 
-  /**
-   * This is how to write a doctest
-   *
-   * # Example
-   *
-   * {{{
-   * scala> Main.not(true)
-   * res0: Boolean = false
-   *
-   * // Multiline
-   * scala> Main.not(
-   *      |  false
-   *      | )
-   * res1: Boolean = true
-   * }}}
-   */
-  def not(b: Boolean): Boolean = !b
 }

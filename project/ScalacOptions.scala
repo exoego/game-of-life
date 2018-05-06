@@ -13,8 +13,8 @@ object ScalacOptions {
 
   final val advanced = Seq(
     "-Xcheckinit", 
-    "-Xfatal-warnings", 
-    "-Xfuture" 
+    "-Xfatal-warnings",
+    "-Xfuture"
   )
 
   final val warnings = Seq(
