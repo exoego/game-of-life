@@ -11,11 +11,11 @@ class Applet extends PApplet {
 
   private final val rand: Random = new Random(java.security.SecureRandom.getInstanceStrong)
 
-  private final val cellSize                  = 5
+  private final val cellSize = 5
   private final val probabilityOfAliveAtStart = 15
 
   private final val alive = color(248, 221, 140)
-  private final val dead  = color(0)
+  private final val dead = color(0)
 
   private var cells: Array[Array[Int]] = Array.empty
   // Buffer to record the state of the cells and use this while changing the others in the interations
@@ -24,6 +24,7 @@ class Applet extends PApplet {
   private var paused: Boolean = false
 
   private def rows_ = width / cellSize
+
   private def cols_ = height / cellSize
 
   override def settings(): Unit = {
@@ -53,20 +54,8 @@ class Applet extends PApplet {
     // This stroke will draw the background grid
     stroke(48)
 
-    // Initialization of cells
-    for {
-      x <- 0 until rows
-      y <- 0 until cols
-    } {
-      val p = rand.nextInt(100)
-      val state = if (p > probabilityOfAliveAtStart) {
-        0
-      } else {
-        1
-      }
-      // Save state of each cell
-      cells(x)(y) = state
-    }
+    initializeCells()
+
     // Fill in black in case cells don't cover all the windows
     background(0)
   }
@@ -171,20 +160,24 @@ class Applet extends PApplet {
     }
   }
 
+  private def initializeCells(): Unit = {
+    for {
+      (x, y) <- iterate()
+    } {
+      cells(x)(y) = generateCell()
+    }
+  }
+
+  private def generateCell(): Int =
+    if (rand.nextInt(100) > probabilityOfAliveAtStart) {
+      0
+    } else {
+      1
+    }
+
   override def keyPressed(): Unit = {
     if (key == 'r' || key == 'R') {
-      // Restart: reinitialization of cells
-      for {
-        (x, y) <- iterate()
-      } {
-        val state = if (rand.nextInt(100) > probabilityOfAliveAtStart) {
-          0
-        } else {
-          1
-        }
-        // Save state of each cell
-        cells(x)(y) = state
-      }
+      initializeCells()
     }
 
     if (key == ' ') { // On/off of pause
