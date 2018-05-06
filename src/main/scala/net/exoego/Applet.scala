@@ -23,6 +23,9 @@ class Applet extends PApplet {
 
   private var paused: Boolean = false
 
+  private def rows_ = width / cellSize
+  private def cols_ = height / cellSize
+
   override def settings(): Unit = {
     size(720, 720, JAVA2D)
     noSmooth()
@@ -32,8 +35,8 @@ class Applet extends PApplet {
     surface.setTitle("Game of Life")
     frameRate(30)
 
-    val rows: Int = width / cellSize
-    val cols: Int = height / cellSize
+    val rows = rows_
+    val cols = cols_
 
     // Instantiate arrays
     cells = Array.fill(rows) {
@@ -68,14 +71,10 @@ class Applet extends PApplet {
     background(0)
   }
 
-  private def rows = width / cellSize
-
-  private def cols = height / cellSize
-
   private def iterate(): Iterator[(Int, Int)] = {
     for {
-      x <- (0 until rows).iterator
-      y <- (0 until cols).iterator
+      x <- (0 until rows_).iterator
+      y <- (0 until cols_).iterator
     } yield {
       (x, y)
     }
@@ -101,12 +100,12 @@ class Applet extends PApplet {
     if (paused && mousePressed) {
       // Map and avoid out of bound errors
       val xCellOver = {
-        val cellOver = map(mouseX.toFloat, 0f, width.toFloat, 0f, rows.toFloat).toInt
-        constrain(cellOver, 0, rows - 1)
+        val cellOver = map(mouseX.toFloat, 0f, width.toFloat, 0f, rows_.toFloat).toInt
+        constrain(cellOver, 0, rows_ - 1)
       }
       val yCellOver = {
-        val cellOver = map(mouseY.toFloat, 0f, height.toFloat, 0f, cols.toFloat).toInt
-        constrain(cellOver, 0, cols - 1)
+        val cellOver = map(mouseY.toFloat, 0f, height.toFloat, 0f, cols_.toFloat).toInt
+        constrain(cellOver, 0, cols_ - 1)
       }
 
       // Check against cells in buffer
@@ -121,7 +120,7 @@ class Applet extends PApplet {
       // Save cells to buffer (so we opeate with one array keeping the other intact)
 
       for {
-        (x, y) <- iterate()
+        (x, y) <- iterate
       } {
         cellsBuffer(x)(y) = cells(x)(y)
       }
@@ -129,6 +128,9 @@ class Applet extends PApplet {
   }
 
   def iteration(): Unit = { // When the clock ticks
+    val rows = rows_
+    val cols = cols_
+
     // Save cells to buffer (so we opeate with one array keeping the other intact)
     for {
       (x, y) <- iterate()
