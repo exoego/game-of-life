@@ -12,13 +12,13 @@ class Applet extends PApplet {
   private final val DEAD: Int  = 0
   private final val ALIVE: Int = 1
 
+  private final val COLOR_ALIVE = color(248, 221, 140)
+  private final val COLOR_DEAD  = color(0)
+
   private final val rand: Random = new Random(java.security.SecureRandom.getInstanceStrong)
 
   private final val cellSize                  = 5
   private final val probabilityOfAliveAtStart = 15
-
-  private final val alive = color(248, 221, 140)
-  private final val dead  = color(0)
 
   private var cells: Array[Array[Int]] = Array.empty
   // Buffer to record the state of the cells and use this while changing the others in the interations
@@ -91,7 +91,6 @@ class Applet extends PApplet {
   }
 
   private def toggleCellStateByMouseClick(): Unit = {
-    // Map and avoid out of bound errors
     val xCellOver = {
       val cellOver = map(mouseX.toFloat, 0f, width.toFloat, 0f, rows_.toFloat).toInt
       constrain(cellOver, 0, rows_ - 1)
@@ -101,13 +100,12 @@ class Applet extends PApplet {
       constrain(cellOver, 0, cols_ - 1)
     }
 
-    // Check against cells in buffer
-    if (cellsBuffer(xCellOver)(yCellOver) == 1) {
+    if (cellsBuffer(xCellOver)(yCellOver) == ALIVE) {
       cells(xCellOver)(yCellOver) = DEAD
-      fill(dead)
-    } else { // Cell is dead
+      fill(COLOR_DEAD)
+    } else {
       cells(xCellOver)(yCellOver) = ALIVE
-      fill(alive)
+      fill(COLOR_ALIVE)
     }
   }
 
@@ -115,10 +113,10 @@ class Applet extends PApplet {
     for {
       (x, y) <- iterate()
     } {
-      if (cells(x)(y) == 1) {
-        fill(alive); // If alive
+      if (cells(x)(y) == ALIVE) {
+        fill(COLOR_ALIVE)
       } else {
-        fill(dead); // If dead
+        fill(COLOR_DEAD)
       }
       rect((x * cellSize).toFloat, (y * cellSize).toFloat, cellSize, cellSize)
     }
