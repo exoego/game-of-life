@@ -134,28 +134,30 @@ class Applet extends PApplet {
   }
 
   def iteration(): Unit = {
-    val rows = rows_
-    val cols = cols_
-
     saveCells()
 
     for {
       (x, y) <- iterate()
     } {
-      var neighbours = 0
-
-      for {
-        xx <- x - 1 to x + 1 if xx >= 0 && xx < rows
-        yy <- y - 1 to y + 1 if yy >= 0 && yy < cols && !(xx == x && yy == y)
-      } {
-        // Check alive neighbours and count them
-        if (cellsBuffer(xx)(yy) == 1) {
-          neighbours += 1
-        }
-      }
-
-      cells(x)(y) = nextState(cellsBuffer(x)(y), neighbours)
+      val neighbours   = countNeighbours(x, y)
+      val currentState = cellsBuffer(x)(y)
+      cells(x)(y) = nextState(currentState, neighbours)
     }
+  }
+
+  private def countNeighbours(x: Int, y: Int): Int = {
+    val rows = rows_
+    val cols = cols_
+
+    var neighbours = 0
+    for {
+      xx <- (x - 1) to (x + 1) if xx >= 0 && xx < rows
+      yy <- (y - 1) to (y + 1)
+      if yy >= 0 && yy < cols && !(xx == x && yy == y) && (cellsBuffer(xx)(yy) == ALIVE)
+    } {
+      neighbours += 1
+    }
+    neighbours
   }
 
   private def nextState(currentState: Int, neighbours: Int): Int = {
