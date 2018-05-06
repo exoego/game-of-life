@@ -32,8 +32,18 @@ class Applet extends PApplet {
     noSmooth()
   }
 
+  private val TITLE: String = "Game of Life"
+
+  private def updateTitle(suffix: String = null): Unit = {
+    if (suffix == null) {
+      surface.setTitle(s"${TITLE}")
+    } else {
+      surface.setTitle(s"${TITLE}: ${suffix}")
+    }
+  }
+
   override def setup(): Unit = {
-    surface.setTitle("Game of Life")
+    updateTitle()
     frameRate(30)
 
     val rows = rows_
@@ -62,6 +72,8 @@ class Applet extends PApplet {
   }
 
   override def draw(): Unit = {
+    updateTitle(s"${frameRate.formatted("%.1f")} fps")
+
     drawCell()
 
     if (!paused) {
