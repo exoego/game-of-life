@@ -2,13 +2,11 @@ package net.exoego
 
 import processing.core.PApplet
 import processing.core.PApplet._
+import processing.core.PConstants._
 
 import scala.util.Random
 
 class Applet extends PApplet {
-  override def settings(): Unit = {
-    size(640, 360)
-  }
 
   val title = "Game of Life"
 
@@ -16,7 +14,7 @@ class Applet extends PApplet {
 
   private final val cellSize                  = 5
   private final val probabilityOfAliveAtStart = 15
-  private final val interval                  = 100
+  private final val interval                  = 16
 
   private final val alive = color(0, 200, 0)
   private final val dead  = color(0)
@@ -28,6 +26,11 @@ class Applet extends PApplet {
   private var cellsBuffer: Array[Array[Int]] = Array.empty
 
   private var paused: Boolean = false
+
+  override def settings(): Unit = {
+    size(640, 360, JAVA2D)
+    noSmooth()
+  }
 
   override def setup(): Unit = {
     val rows: Int = width / cellSize
@@ -47,7 +50,6 @@ class Applet extends PApplet {
 
     // This stroke will draw the background grid
     stroke(48)
-    noSmooth()
 
     // Initialization of cells
     for {
