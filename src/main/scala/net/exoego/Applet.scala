@@ -130,17 +130,14 @@ class Applet extends PApplet {
       var neighbours = 0; // We'll count the neighbours
 
       for {
-        xx <- x - 1 to x + 1
-        yy <- y - 1 to y + 1
+        xx <- x - 1 to x + 1 if xx >= 0 && xx < rows
+        yy <- y - 1 to y + 1 if yy >= 0 && yy < cols
       } {
-        // Make sure you are not out of bounds
-        if (((xx >= 0) && (xx < rows)) && ((yy >= 0) && (yy < cols))) {
-          // Make sure to to check against self
-          if (!((xx == x) && (yy == y))) {
-            if (cellsBuffer(xx)(yy) == 1) {
-              // Check alive neighbours and count them
-              neighbours += 1
-            }
+        // Make sure to to check against self
+        if (!((xx == x) && (yy == y))) {
+          // Check alive neighbours and count them
+          if (cellsBuffer(xx)(yy) == 1) {
+            neighbours += 1
           }
         }
       }
