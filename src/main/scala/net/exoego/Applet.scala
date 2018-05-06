@@ -29,6 +29,7 @@ class Applet extends PApplet {
   }
 
   override def setup(): Unit = {
+    surface.setTitle("Game of Life")
     frameRate(30)
 
     val rows: Int = width / cellSize
