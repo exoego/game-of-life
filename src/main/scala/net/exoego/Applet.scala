@@ -52,8 +52,8 @@ class Applet extends PApplet {
 
     // Initialization of cells
     for {
-      x <- (0 until rows)
-      y <- (0 until cols)
+      x <- 0 until rows
+      y <- 0 until cols
     } {
       val p = rand.nextInt(100)
       val state = if (p > probabilityOfAliveAtStart) {
@@ -83,14 +83,14 @@ class Applet extends PApplet {
 
   override def draw(): Unit = {
     for {
-      (x, y) <- iterate
+      (x, y) <- iterate()
     } {
       if (cells(x)(y) == 1) {
         fill(alive); // If alive
       } else {
         fill(dead); // If dead
       }
-      rect((x * cellSize).toFloat, (y * cellSize).toFloat, cellSize, cellSize);
+      rect((x * cellSize).toFloat, (y * cellSize).toFloat, cellSize, cellSize)
     }
 
     if (!paused) {
@@ -114,14 +114,14 @@ class Applet extends PApplet {
         cells(xCellOver)(yCellOver) = 0
         fill(dead)
       } else { // Cell is dead
-        cells(xCellOver)(yCellOver) = 1;
+        cells(xCellOver)(yCellOver) = 1
         fill(alive)
       }
     } else if (paused && !mousePressed) { // And then save to buffer once mouse goes up
       // Save cells to buffer (so we opeate with one array keeping the other intact)
 
       for {
-        (x, y) <- iterate
+        (x, y) <- iterate()
       } {
         cellsBuffer(x)(y) = cells(x)(y)
       }
@@ -131,19 +131,19 @@ class Applet extends PApplet {
   def iteration(): Unit = { // When the clock ticks
     // Save cells to buffer (so we opeate with one array keeping the other intact)
     for {
-      (x, y) <- iterate
+      (x, y) <- iterate()
     } {
-      cellsBuffer(x)(y) = cells(x)(y);
+      cellsBuffer(x)(y) = cells(x)(y)
     }
 
     // Visit each cell:
     for {
-      (x, y) <- iterate
+      (x, y) <- iterate()
     } { // And visit all the neighbours of each cell
       var neighbours = 0; // We'll count the neighbours
 
       for {
-        xx <- (x - 1 to x + 1)
+        xx <- x - 1 to x + 1
         yy <- y - 1 to y + 1
       } {
         // Make sure you are not out of bounds
@@ -175,7 +175,7 @@ class Applet extends PApplet {
     if (key == 'r' || key == 'R') {
       // Restart: reinitialization of cells
       for {
-        (x, y) <- iterate
+        (x, y) <- iterate()
       } {
         val state = if (rand.nextInt(100) > probabilityOfAliveAtStart) {
           0
@@ -188,12 +188,12 @@ class Applet extends PApplet {
     }
 
     if (key == ' ') { // On/off of pause
-      paused = !paused;
+      paused = !paused
 
     }
     if (key == 'c' || key == 'C') { // Clear all
       for {
-        (x, y) <- iterate
+        (x, y) <- iterate()
       } {
         cells(x)(y) = 0 // Save all to zero
       }
