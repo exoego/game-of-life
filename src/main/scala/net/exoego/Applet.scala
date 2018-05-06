@@ -154,15 +154,15 @@ class Applet extends PApplet {
         }
       }
 
-      if (cellsBuffer(x)(y) == ALIVE) {
-        if (neighbours < 2 || neighbours > 3) {
-          cells(x)(y) = DEAD
-        }
-      } else {
-        if (neighbours == 3) {
-          cells(x)(y) = ALIVE
-        }
-      }
+      cells(x)(y) = nextState(cellsBuffer(x)(y), neighbours)
+    }
+  }
+
+  private def nextState(currentState: Int, neighbours: Int): Int = {
+    currentState match {
+      case ALIVE if neighbours < 2 || neighbours > 3 => DEAD
+      case DEAD if neighbours == 3                   => ALIVE
+      case _                                         => currentState
     }
   }
 
