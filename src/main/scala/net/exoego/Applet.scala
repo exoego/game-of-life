@@ -7,21 +7,69 @@ import processing.core.PConstants._
 import scala.util.Random
 
 class Applet extends PApplet {
-  private final val DEAD: Int  = 0
-  private final val ALIVE: Int = 1
-
   private final val COLOR_ALIVE = color(248, 221, 140)
   private final val COLOR_DEAD  = color(0)
   private final val COLOR_GRID  = color(48)
 
-  private final val rand: Random = new Random(java.security.SecureRandom.getInstanceStrong)
+  private final val cellSize = 5
 
-  private final val cellSize                  = 5
-  private final val probabilityOfAliveAtStart = 15
+  sealed trait CellState
 
-  private var cells: Array[Array[Int]] = Array.empty
-  // Buffer to record the state of the cells and use this while changing the others in the interactions
-  private var cellsBuffer: Array[Array[Int]] = Array.empty
+  case object Dead extends CellState
+
+  case object Alive extends CellState
+
+  object Cell {
+    private final val rand: Random              = new Random(java.security.SecureRandom.getInstanceStrong)
+    private final val probabilityOfAliveAtStart = 15
+  }
+
+  case class Cell(private var state: CellState, private var lastState: CellState) {
+    import Cell._
+
+    def toggle(): Unit = {
+      if (wasActiveLast()) {
+        this.die()
+      } else {
+        this.born()
+      }
+    }
+
+    def color(): Int = {
+      this.state match {
+        case Dead  => COLOR_DEAD
+        case Alive => COLOR_ALIVE
+      }
+    }
+
+    def mutate(): Unit = {
+      if (rand.nextInt(100) > probabilityOfAliveAtStart) {
+        this.die()
+      } else {
+        this.born()
+      }
+    }
+
+    def wasActiveLast(): Boolean = this.lastState == Alive
+
+    def saveState(): Unit = {
+      this.lastState = this.state
+    }
+
+    def nextState(neighbours: Int): Unit = {
+      this.state match {
+        case Alive if neighbours < 2 || neighbours > 3 => die()
+        case Dead if neighbours == 3                   => born()
+        case _                                         => // do nothing
+      }
+    }
+
+    def die(): Unit = this.state = Dead
+
+    def born(): Unit = this.state = Alive
+  }
+
+  private var cells: Array[Array[Cell]] = Array.empty
 
   private var paused: Boolean = false
 
@@ -51,8 +99,7 @@ class Applet extends PApplet {
     // Fill in case cells don't cover all the windows
     background(COLOR_DEAD)
 
-    cells = Array.ofDim(rows_, cols_)
-    cellsBuffer = Array.ofDim(rows_, cols_)
+    cells = Array.fill(rows_)(Array.fill(cols_)(Cell(Dead, Dead)))
     initializeCells()
   }
 
@@ -95,24 +142,15 @@ class Applet extends PApplet {
       constrain(cellOver, 0, cols_ - 1)
     }
 
-    if (cellsBuffer(xCellOver)(yCellOver) == ALIVE) {
-      cells(xCellOver)(yCellOver) = DEAD
-      fill(COLOR_DEAD)
-    } else {
-      cells(xCellOver)(yCellOver) = ALIVE
-      fill(COLOR_ALIVE)
-    }
+    cells(xCellOver)(yCellOver).toggle()
+    fill(cells(xCellOver)(yCellOver).color())
   }
 
   private def drawCell() = {
     for {
       (x, y) <- coordinates()
     } {
-      if (cells(x)(y) == ALIVE) {
-        fill(COLOR_ALIVE)
-      } else {
-        fill(COLOR_DEAD)
-      }
+      fill(cells(x)(y).color())
       rect((x * cellSize).toFloat, (y * cellSize).toFloat, cellSize, cellSize)
     }
   }
@@ -121,7 +159,7 @@ class Applet extends PApplet {
     for {
       (x, y) <- coordinates()
     } {
-      cellsBuffer(x)(y) = cells(x)(y)
+      cells(x)(y).saveState()
     }
   }
 
@@ -131,9 +169,8 @@ class Applet extends PApplet {
     for {
       (x, y) <- coordinates()
     } {
-      val neighbours   = countNeighbours(x, y)
-      val currentState = cellsBuffer(x)(y)
-      cells(x)(y) = nextState(currentState, neighbours)
+      val neighbours = countNeighbours(x, y)
+      cells(x)(y).nextState(neighbours)
     }
   }
 
@@ -144,34 +181,18 @@ class Applet extends PApplet {
     var neighbours = 0
     for {
       xx <- (x - 1) to (x + 1) if xx >= 0 && xx < rows
-      yy <- (y - 1) to (y + 1) if yy >= 0 && yy < cols && !(xx == x && yy == y) && (cellsBuffer(xx)(yy) == ALIVE)
+      yy <- (y - 1) to (y + 1) if yy >= 0 && yy < cols && !(xx == x && yy == y) && cells(xx)(yy).wasActiveLast()
     } {
       neighbours += 1
     }
     neighbours
   }
 
-  private def nextState(currentState: Int, neighbours: Int): Int = {
-    currentState match {
-      case ALIVE if neighbours < 2 || neighbours > 3 => DEAD
-      case DEAD if neighbours == 3                   => ALIVE
-      case _                                         => currentState
-    }
-  }
-
   private def initializeCells(): Unit = {
     for {
       (x, y) <- coordinates()
     } {
-      cells(x)(y) = generateCell()
-    }
-  }
-
-  private def generateCell(): Int = {
-    if (rand.nextInt(100) > probabilityOfAliveAtStart) {
-      DEAD
-    } else {
-      ALIVE
+      cells(x)(y).mutate()
     }
   }
 
@@ -192,7 +213,7 @@ class Applet extends PApplet {
     for {
       (x, y) <- coordinates()
     } {
-      cells(x)(y) = DEAD
+      cells(x)(y).die()
     }
   }
 }
