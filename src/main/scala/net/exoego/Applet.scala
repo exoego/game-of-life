@@ -12,6 +12,7 @@ class Applet extends PApplet {
 
   private final val COLOR_ALIVE = color(248, 221, 140)
   private final val COLOR_DEAD  = color(0)
+  private final val COLOR_GRID  = color(48)
 
   private final val rand: Random = new Random(java.security.SecureRandom.getInstanceStrong)
 
@@ -46,21 +47,13 @@ class Applet extends PApplet {
   override def setup(): Unit = {
     updateTitle()
     frameRate(30)
+    stroke(COLOR_GRID)
+    // Fill in case cells don't cover all the windows
+    background(COLOR_DEAD)
 
-    val rows = rows_
-    val cols = cols_
-
-    // Instantiate arrays
-    cells = Array.ofDim(rows, cols)
-    cellsBuffer = Array.ofDim(rows, cols)
-
-    // This stroke will draw the background grid
-    stroke(48)
-
+    cells = Array.ofDim(rows_, cols_)
+    cellsBuffer = Array.ofDim(rows_, cols_)
     initializeCells()
-
-    // Fill in black in case cells don't cover all the windows
-    background(0)
   }
 
   private def coordinatesRows(): Iterator[Int] = (0 until rows_).iterator
