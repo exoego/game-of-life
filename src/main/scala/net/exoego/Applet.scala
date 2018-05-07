@@ -21,7 +21,7 @@ class Applet extends PApplet {
   private final val probabilityOfAliveAtStart = 15
 
   private var cells: Array[Array[Int]] = Array.empty
-  // Buffer to record the state of the cells and use this while changing the others in the interations
+  // Buffer to record the state of the cells and use this while changing the others in the interactions
   private var cellsBuffer: Array[Array[Int]] = Array.empty
 
   private var paused: Boolean = false
@@ -126,7 +126,6 @@ class Applet extends PApplet {
   }
 
   private def saveCells(): Unit = {
-    // Save cells to buffer (so we opeate with one array keeping the other intact)
     for {
       (x, y) <- coordinates()
     } {
