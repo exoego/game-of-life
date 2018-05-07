@@ -57,6 +57,7 @@ class Applet extends PApplet {
   }
 
   private def coordinatesRows(): Iterator[Int] = (0 until rows_).iterator
+
   private def coordinatesCols(): Iterator[Int] = (0 until cols_).iterator
 
   private def coordinates(): Iterator[(Int, Int)] = {
@@ -166,12 +167,13 @@ class Applet extends PApplet {
     }
   }
 
-  private def generateCell(): Int =
+  private def generateCell(): Int = {
     if (rand.nextInt(100) > probabilityOfAliveAtStart) {
       DEAD
     } else {
       ALIVE
     }
+  }
 
   override def keyPressed(): Unit = {
     key match {
