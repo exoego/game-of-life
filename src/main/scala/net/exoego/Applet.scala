@@ -153,8 +153,7 @@ class Applet extends PApplet {
     var neighbours = 0
     for {
       xx <- (x - 1) to (x + 1) if xx >= 0 && xx < rows
-      yy <- (y - 1) to (y + 1)
-      if yy >= 0 && yy < cols && !(xx == x && yy == y) && (cellsBuffer(xx)(yy) == ALIVE)
+      yy <- (y - 1) to (y + 1) if yy >= 0 && yy < cols && !(xx == x && yy == y) && (cellsBuffer(xx)(yy) == ALIVE)
     } {
       neighbours += 1
     }
