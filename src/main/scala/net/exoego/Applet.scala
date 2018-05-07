@@ -178,6 +178,7 @@ class Applet extends PApplet {
       case 'r' | 'R' => initializeCells()
       case ' '       => togglePause()
       case 'c' | 'C' => clearAllCells()
+      case _         => // do nothing
     }
   }
 
