@@ -174,14 +174,34 @@ class Applet extends PApplet {
     }
   }
 
+  final val bounded: (Int, Int) => Seq[Int] = (current: Int, rangeMax: Int) => {
+    val limit = rangeMax - 1
+    current match {
+      case 0       => Array(current, current + 1)
+      case `limit` => Array(current - 1, current)
+      case _       => Array(current - 1, current, current + 1)
+    }
+  }
+
+  final val troidal: (Int, Int) => Seq[Int] = (current: Int, rangeMax: Int) => {
+    val limit = rangeMax - 1
+    current match {
+      case 0       => Array(rangeMax - 1, current, current + 1)
+      case `limit` => Array(current - 1, current, 0)
+      case _       => Array(current - 1, current, current + 1)
+    }
+  }
+
+  final val boundaryProcessor = troidal
+
   private def countNeighbours(x: Int, y: Int): Int = {
     val rows = rows_
     val cols = cols_
 
     var neighbours = 0
     for {
-      xx <- (x - 1) to (x + 1) if xx >= 0 && xx < rows
-      yy <- (y - 1) to (y + 1) if yy >= 0 && yy < cols && !(xx == x && yy == y) && cells(xx)(yy).wasActiveLast()
+      xx <- boundaryProcessor(x, rows)
+      yy <- boundaryProcessor(y, cols) if !(xx == x && yy == y) && cells(xx)(yy).wasActiveLast()
     } {
       neighbours += 1
     }
