@@ -7,8 +7,6 @@ import processing.core.PConstants._
 import scala.util.Random
 
 class Applet extends PApplet {
-  val title = "Game of Life"
-
   private final val DEAD: Int  = 0
   private final val ALIVE: Int = 1
 
