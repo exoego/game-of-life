@@ -7,7 +7,7 @@ import processing.core.PConstants._
 import scala.util.Random
 
 class Applet extends PApplet {
-  private final val COLOR_ALIVE = color(248, 221, 140)
+  private final val COLOR_ALIVE = color(24, 160, 167)
   private final val COLOR_DEAD  = color(0)
   private final val COLOR_GRID  = color(48)
 
