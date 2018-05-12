@@ -4,14 +4,17 @@ import processing.core.PApplet
 import processing.core.PApplet._
 import processing.core.PConstants._
 
+import scala.util.Random
+
 class Applet extends PApplet {
   private final val COLOR_ALIVE = color(24, 160, 167)
-  private final val COLOR_DEAD = color(0)
-  private final val COLOR_GRID = color(48)
+  private final val COLOR_DEAD  = color(0)
+  private final val COLOR_GRID  = color(48)
 
   private final val cellSize = 10
 
-  private var cells: Array[Array[Cell]] = Array.empty
+  private var cells: Array[Array[Cell]]       = Array.empty
+  private var bufferCells: Array[Array[Cell]] = Array.empty
 
   private var paused: Boolean = false
 
@@ -41,7 +44,8 @@ class Applet extends PApplet {
     // Fill in case cells don't cover all the windows
     background(COLOR_DEAD)
 
-    cells = Array.fill(rows_)(Array.fill(cols_)(Cell(Dead, Dead)))
+    cells = Array.fill(rows_)(Array.fill(cols_)(Dead))
+    bufferCells = Array.fill(rows_)(Array.fill(cols_)(Dead))
     initializeCells()
   }
 
@@ -75,9 +79,9 @@ class Applet extends PApplet {
   }
 
   private def draw(cell: Cell): Unit = {
-    fill(cell.currentState() match {
+    fill(cell match {
       case Dead => COLOR_DEAD
-      case Alive => COLOR_ALIVE
+      case Live => COLOR_ALIVE
     })
   }
 
@@ -91,8 +95,8 @@ class Applet extends PApplet {
       constrain(cellOver, 0, cols_ - 1)
     }
 
-    val cell = cells(xCellOver)(yCellOver)
-    cell.toggle()
+    val cell = bufferCells(xCellOver)(yCellOver).toggle
+    cells(xCellOver)(yCellOver) = cell
     draw(cell)
   }
 
@@ -100,7 +104,7 @@ class Applet extends PApplet {
     for {
       (x, y) <- coordinates()
     } {
-      draw(cells(x)(y))
+      draw(bufferCells(x)(y))
       rect((x * cellSize).toFloat, (y * cellSize).toFloat, cellSize, cellSize)
     }
   }
@@ -109,7 +113,7 @@ class Applet extends PApplet {
     for {
       (x, y) <- coordinates()
     } {
-      cells(x)(y).saveState()
+      bufferCells(x)(y) = cells(x)(y)
     }
   }
 
@@ -120,25 +124,25 @@ class Applet extends PApplet {
       (x, y) <- coordinates()
     } {
       val neighbours = countNeighbours(x, y)
-      cells(x)(y).nextState(neighbours)
+      cells(x)(y) = bufferCells(x)(y).nextState(neighbours)
     }
   }
 
   final val bounded: (Int, Int) => Seq[Int] = (current: Int, rangeMax: Int) => {
     val limit = rangeMax - 1
     current match {
-      case 0 => Array(current, current + 1)
+      case 0       => Array(current, current + 1)
       case `limit` => Array(current - 1, current)
-      case _ => Array(current - 1, current, current + 1)
+      case _       => Array(current - 1, current, current + 1)
     }
   }
 
   final val troidal: (Int, Int) => Seq[Int] = (current: Int, rangeMax: Int) => {
     val limit = rangeMax - 1
     current match {
-      case 0 => Array(rangeMax - 1, current, current + 1)
+      case 0       => Array(rangeMax - 1, current, current + 1)
       case `limit` => Array(current - 1, current, 0)
-      case _ => Array(current - 1, current, current + 1)
+      case _       => Array(current - 1, current, current + 1)
     }
   }
 
@@ -151,27 +155,34 @@ class Applet extends PApplet {
     var neighbours = 0
     for {
       xx <- boundaryProcessor(x, rows)
-      yy <- boundaryProcessor(y, cols) if !(xx == x && yy == y) && cells(xx)(yy).wasActiveLast()
+      yy <- boundaryProcessor(y, cols) if !(xx == x && yy == y) && bufferCells(xx)(yy).isLive
     } {
       neighbours += 1
     }
     neighbours
   }
 
+  private final val rand: Random              = new Random(java.security.SecureRandom.getInstanceStrong)
+  private final val probabilityOfAliveAtStart = 15
+
   private def initializeCells(): Unit = {
     for {
       (x, y) <- coordinates()
     } {
-      cells(x)(y).mutate()
+      if (rand.nextInt(100) <= probabilityOfAliveAtStart) {
+        cells(x)(y) = Live
+      } else {
+        cells(x)(y) = Dead
+      }
     }
   }
 
   override def keyPressed(): Unit = {
     key match {
       case 'r' | 'R' => initializeCells()
-      case ' ' => togglePause()
+      case ' '       => togglePause()
       case 'c' | 'C' => clearAllCells()
-      case _ => // do nothing
+      case _         => // do nothing
     }
   }
 
@@ -183,7 +194,7 @@ class Applet extends PApplet {
     for {
       (x, y) <- coordinates()
     } {
-      cells(x)(y).die()
+      cells(x)(y) = Dead
     }
   }
 }
