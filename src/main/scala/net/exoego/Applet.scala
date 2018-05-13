@@ -13,18 +13,24 @@ class Applet extends PApplet {
   private final val COLOR_DEAD  = color(0)
   private final val COLOR_GRID  = color(48)
 
-  private final val cellSize                           = 5
-  private val cells: MutableParSet[(Int, Int)]         = MutableParSet.empty
-  private val bufferCells: MutableParSet[(Int, Int)]   = MutableParSet.empty
-  private val countCells: mutable.Map[(Int, Int), Int] = mutable.Map.empty
+  private final val cellSize                  = 5
+  private final val probabilityOfAliveAtStart = 15
+  private final val useFullScreen             = false
+
+  private final val cells       = MutableParSet.empty[(Int, Int)]
+  private final val bufferCells = MutableParSet.empty[(Int, Int)]
+  private final val countCells  = mutable.Map.empty[(Int, Int), Int]
+
+  private final val lifecycleRule: LifeCycleRule         = Rule23_3
+  private final val boundaryProcessor: BoundaryProcessor = Loop
+
+  private final val rand: Random = new Random(java.security.SecureRandom.getInstanceStrong)
 
   private var paused: Boolean = false
 
   private def rows_ = width / cellSize
 
   private def cols_ = height / cellSize
-
-  private val useFullScreen = false
 
   override def settings(): Unit = {
     if (useFullScreen) {
@@ -37,11 +43,11 @@ class Applet extends PApplet {
 
   private val TITLE: String = "Game of Life"
 
-  private def updateTitle(suffix: String = null): Unit = {
-    if (suffix == null) {
+  private def updateTitle(fps: String = null): Unit = {
+    if (fps == null) {
       surface.setTitle(s"${TITLE}")
     } else {
-      surface.setTitle(s"${TITLE}: ${suffix} ${if (paused) ": paused" else ""}")
+      surface.setTitle(s"${TITLE}: ${if (paused) "paused" else fps}")
     }
   }
 
@@ -49,7 +55,6 @@ class Applet extends PApplet {
     updateTitle()
     frameRate(30)
     stroke(COLOR_GRID)
-    // Fill in case cells don't cover all the windows
     background(COLOR_DEAD)
     initializeCells()
   }
@@ -165,45 +170,13 @@ class Applet extends PApplet {
     cells.clear()
     countCells.par.foreach {
       case ((x, y), neighbours) =>
-        if (rule(bufferCells.contains((x, y)), neighbours)) {
+        if (lifecycleRule(bufferCells.contains((x, y)), neighbours)) {
           cells += ((x, y))
         } else {
           cells - ((x, y))
         }
     }
   }
-
-  final val rule: (Boolean, Int) => Boolean = (isAlive: Boolean, neighbours: Int) => {
-    (isAlive, neighbours) match {
-      case (true, 2)  => true
-      case (true, 3)  => true
-      case (false, 3) => true
-      case _          => false
-    }
-  }
-
-  final val bounded: (Int, Int) => Seq[Int] = (current: Int, rangeMax: Int) => {
-    val limit = rangeMax - 1
-    current match {
-      case 0       => Array(current, current + 1)
-      case `limit` => Array(current - 1, current)
-      case _       => Array(current - 1, current, current + 1)
-    }
-  }
-
-  final val troidal: (Int, Int) => Seq[Int] = (current: Int, rangeMax: Int) => {
-    val limit = rangeMax - 1
-    current match {
-      case 0       => Array(rangeMax - 1, current, current + 1)
-      case `limit` => Array(current - 1, current, 0)
-      case _       => Array(current - 1, current, current + 1)
-    }
-  }
-
-  final val boundaryProcessor = troidal
-
-  private final val rand: Random              = new Random(java.security.SecureRandom.getInstanceStrong)
-  private final val probabilityOfAliveAtStart = 15
 
   private def initializeCells(): Unit = {
     clearAllCells()
