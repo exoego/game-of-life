@@ -4,6 +4,7 @@ import processing.core.PApplet
 import processing.core.PApplet._
 import processing.core.PConstants._
 
+import scala.collection.mutable
 import scala.util.Random
 
 class Applet extends PApplet {
@@ -11,10 +12,10 @@ class Applet extends PApplet {
   private final val COLOR_DEAD  = color(0)
   private final val COLOR_GRID  = color(48)
 
-  private final val cellSize = 10
-
-  private var cells: Array[Array[Cell]]       = Array.empty
-  private var bufferCells: Array[Array[Cell]] = Array.empty
+  private final val cellSize                           = 4
+  private val cells: mutable.Set[(Int, Int)]           = mutable.Set.empty
+  private val bufferCells: mutable.Set[(Int, Int)]     = mutable.Set.empty
+  private val countCells: mutable.Map[(Int, Int), Int] = mutable.Map.empty
 
   private var paused: Boolean = false
 
@@ -23,7 +24,7 @@ class Applet extends PApplet {
   private def cols_ = height / cellSize
 
   override def settings(): Unit = {
-    size(900, 900, JAVA2D)
+    size(1600, 900, JAVA2D)
     noSmooth()
   }
 
@@ -33,7 +34,7 @@ class Applet extends PApplet {
     if (suffix == null) {
       surface.setTitle(s"${TITLE}")
     } else {
-      surface.setTitle(s"${TITLE}: ${suffix}")
+      surface.setTitle(s"${TITLE}: ${suffix} ${if (paused) ": paused" else ""}")
     }
   }
 
@@ -43,9 +44,6 @@ class Applet extends PApplet {
     stroke(COLOR_GRID)
     // Fill in case cells don't cover all the windows
     background(COLOR_DEAD)
-
-    cells = Array.fill(rows_)(Array.fill(cols_)(Dead))
-    bufferCells = Array.fill(rows_)(Array.fill(cols_)(Dead))
     initializeCells()
   }
 
@@ -53,7 +51,7 @@ class Applet extends PApplet {
 
   private def coordinatesCols(): Iterator[Int] = (0 until cols_).iterator
 
-  private def coordinates(): Iterator[(Int, Int)] = {
+  private def allCoordinates(): Iterator[(Int, Int)] = {
     for {
       x <- coordinatesRows()
       y <- coordinatesCols()
@@ -78,10 +76,10 @@ class Applet extends PApplet {
     }
   }
 
-  private def draw(cell: Cell): Unit = {
-    fill(cell match {
-      case Dead => COLOR_DEAD
-      case Live => COLOR_ALIVE
+  private def draw(isAlive: Boolean): Unit = {
+    fill(isAlive match {
+      case false => COLOR_DEAD
+      case true  => COLOR_ALIVE
     })
   }
 
@@ -95,36 +93,85 @@ class Applet extends PApplet {
       constrain(cellOver, 0, cols_ - 1)
     }
 
-    val cell = bufferCells(xCellOver)(yCellOver).toggle
-    cells(xCellOver)(yCellOver) = cell
-    draw(cell)
+    toggle(xCellOver, yCellOver)
   }
 
-  private def drawCell() = {
+  private def toggle(x: Int, y: Int): Unit = {
+    if (bufferCells.contains((x, y))) {
+      bufferCells.remove((x, y))
+      cells.remove((x, y))
+      draw(false)
+    } else {
+      bufferCells.add((x, y))
+      cells.add((x, y))
+      draw(true)
+    }
+  }
+
+  private def updateNeighbours(x: Int, y: Int, n: Int): Unit = {
+    val rows = rows_
+    val cols = cols_
+
     for {
-      (x, y) <- coordinates()
+      xx <- boundaryProcessor(x, rows)
+      yy <- boundaryProcessor(y, cols) if !(xx == x && yy == y)
     } {
-      draw(bufferCells(x)(y))
+      val u = countCells.getOrElse((xx, yy), 0) + n
+      if (u == 0) {
+        countCells.remove((xx, yy))
+      } else {
+        countCells.update((xx, yy), u)
+      }
+    }
+  }
+
+  private def drawCell(): Unit = {
+    draw(false)
+    rect(0f, 0f, width.toFloat, height.toFloat)
+
+    for {
+      (x, y) <- bufferCells.iterator
+    } {
+      draw(true)
       rect((x * cellSize).toFloat, (y * cellSize).toFloat, cellSize, cellSize)
     }
   }
 
   private def saveCells(): Unit = {
+    bufferCells.clear()
     for {
-      (x, y) <- coordinates()
+      (x, y) <- cells.iterator
     } {
-      bufferCells(x)(y) = cells(x)(y)
+      bufferCells.add((x, y))
     }
+    countCells.clear()
   }
 
   def iteration(): Unit = {
     saveCells()
 
-    for {
-      (x, y) <- coordinates()
-    } {
-      val neighbours = countNeighbours(x, y)
-      cells(x)(y) = bufferCells(x)(y).nextState(neighbours)
+    bufferCells.iterator.foreach {
+      case (x, y) =>
+        updateNeighbours(x, y, 1)
+    }
+
+    cells.clear()
+    countCells.foreach {
+      case ((x, y), neighbours) =>
+        if (rule(bufferCells.contains((x, y)), neighbours)) {
+          cells.add((x, y))
+        } else {
+          cells.remove((x, y))
+        }
+    }
+  }
+
+  final val rule: (Boolean, Int) => Boolean = (isAlive: Boolean, neighbours: Int) => {
+    (isAlive, neighbours) match {
+      case (true, 2)  => true
+      case (true, 3)  => true
+      case (false, 3) => true
+      case _          => false
     }
   }
 
@@ -148,31 +195,16 @@ class Applet extends PApplet {
 
   final val boundaryProcessor = troidal
 
-  private def countNeighbours(x: Int, y: Int): Int = {
-    val rows = rows_
-    val cols = cols_
-
-    var neighbours = 0
-    for {
-      xx <- boundaryProcessor(x, rows)
-      yy <- boundaryProcessor(y, cols) if !(xx == x && yy == y) && bufferCells(xx)(yy).isLive
-    } {
-      neighbours += 1
-    }
-    neighbours
-  }
-
   private final val rand: Random              = new Random(java.security.SecureRandom.getInstanceStrong)
   private final val probabilityOfAliveAtStart = 15
 
   private def initializeCells(): Unit = {
+    clearAllCells()
     for {
-      (x, y) <- coordinates()
+      (x, y) <- allCoordinates()
     } {
       if (rand.nextInt(100) <= probabilityOfAliveAtStart) {
-        cells(x)(y) = Live
-      } else {
-        cells(x)(y) = Dead
+        cells.add((x, y))
       }
     }
   }
@@ -191,10 +223,8 @@ class Applet extends PApplet {
   }
 
   private def clearAllCells(): Unit = {
-    for {
-      (x, y) <- coordinates()
-    } {
-      cells(x)(y) = Dead
-    }
+    cells.clear()
+    bufferCells.clear()
+    countCells.clear()
   }
 }
