@@ -150,7 +150,7 @@ class Applet extends PApplet {
   private def saveCells(): Unit = {
     bufferCells.clear()
     for {
-      (x, y) <- cells.par.iterator
+      (x, y) <- cells.iterator
     } {
       bufferCells += ((x, y))
     }
