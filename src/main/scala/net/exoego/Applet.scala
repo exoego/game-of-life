@@ -4,7 +4,8 @@ import processing.core.PApplet
 import processing.core.PApplet._
 import processing.core.PConstants._
 
-import scala.collection.mutable
+import java.util.concurrent.{ConcurrentHashMap => ConcurrentHashMap}
+
 import scala.collection.parallel.mutable.{ParSet => MutableParSet}
 import scala.util.Random
 
@@ -19,7 +20,7 @@ class Applet extends PApplet {
 
   private final val cells       = MutableParSet.empty[(Int, Int)]
   private final val bufferCells = MutableParSet.empty[(Int, Int)]
-  private final val countCells  = mutable.Map.empty[(Int, Int), Int]
+  private final val countCells  = new ConcurrentHashMap[(Int, Int), Int]()
 
   private final val lifecycleRule: LifeCycleRule         = Rule23_3
   private final val boundaryProcessor: BoundaryProcessor = Loop
@@ -117,12 +118,9 @@ class Applet extends PApplet {
       xx <- boundaryProcessor(x, rows)
       yy <- boundaryProcessor(y, cols) if !(xx == x && yy == y)
     } {
-      val u = countCells.getOrElse((xx, yy), 0) + n
-      if (u == 0) {
-        countCells.remove((xx, yy))
-      } else {
-        countCells.update((xx, yy), u)
-      }
+      countCells.compute((xx, yy), (_, old) => {
+        old + n
+      })
     }
   }
 
@@ -160,19 +158,20 @@ class Applet extends PApplet {
   }
 
   def iteration(): Unit = {
-    bufferCells.iterator.foreach {
+    bufferCells.foreach {
       case (x, y) =>
         updateNeighbours(x, y, 1)
     }
 
     cells.clear()
-    countCells.par.foreach {
-      case ((x, y), neighbours) =>
-        if (lifecycleRule(bufferCells.contains((x, y)), neighbours)) {
-          cells += ((x, y))
-        } else {
-          cells - ((x, y))
-        }
+    countCells.entrySet().forEach { t =>
+      val coordinate = t.getKey
+      val neighbours = t.getValue
+      if (lifecycleRule(bufferCells.contains(coordinate), neighbours)) {
+        cells += coordinate
+      } else {
+        cells -= coordinate
+      }
     }
   }
 
