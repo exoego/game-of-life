@@ -15,7 +15,7 @@ class Applet extends PApplet {
 
   private final val cellSize                  = 5
   private final val probabilityOfAliveAtStart = 15
-  private final val useFullScreen             = false
+  private final val useFullScreen             = true
 
   private final val cells       = MutableParSet.empty[(Int, Int)]
   private final val bufferCells = MutableParSet.empty[(Int, Int)]
@@ -57,19 +57,6 @@ class Applet extends PApplet {
     stroke(COLOR_GRID)
     background(COLOR_DEAD)
     initializeCells()
-  }
-
-  private def coordinatesRows(): Iterator[Int] = (0 until rows_).iterator
-
-  private def coordinatesCols(): Iterator[Int] = (0 until cols_).iterator
-
-  private def allCoordinates(): Iterator[(Int, Int)] = {
-    for {
-      x <- coordinatesRows()
-      y <- coordinatesCols()
-    } yield {
-      (x, y)
-    }
   }
 
   override def draw(): Unit = {
@@ -179,12 +166,18 @@ class Applet extends PApplet {
   }
 
   private def initializeCells(): Unit = {
+    val size  = (width * height) / (cellSize * cellSize) * probabilityOfAliveAtStart / 100
+    val chunk = 1
+
+    val sizePerChunk = size / chunk
+
     clearAllCells()
-    for {
-      (x, y) <- allCoordinates()
-    } {
-      if (rand.nextInt(100) <= probabilityOfAliveAtStart) {
-        cells += ((x, y))
+    (0 until chunk).par.foreach { _ =>
+      val randomCoordinates = Stream.continually(rand).map(r => (r.nextInt(rows_), r.nextInt(cols_))).take(sizePerChunk)
+      for {
+        coordinate <- randomCoordinates
+      } {
+        cells += coordinate
       }
     }
   }
