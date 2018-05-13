@@ -65,22 +65,16 @@ class Applet extends PApplet {
     drawCell()
 
     if (!paused) {
+      saveCells()
       iteration()
-    }
-
-    if (paused && mousePressed) {
+    } else if (mousePressed) {
       toggleCellStateByMouseClick()
-    } else if (paused && !mousePressed) {
+    } else {
       saveCells()
     }
   }
 
-  private def draw(isAlive: Boolean): Unit = {
-    fill(isAlive match {
-      case false => COLOR_DEAD
-      case true  => COLOR_ALIVE
-    })
-  }
+  private var toggleInitState: Option[Boolean] = None
 
   private def toggleCellStateByMouseClick(): Unit = {
     val xCellOver = {
@@ -92,18 +86,21 @@ class Applet extends PApplet {
       constrain(cellOver, 0, cols_ - 1)
     }
 
-    toggle(xCellOver, yCellOver)
+    toggleInitState match {
+      case Some(isAlive) => toggle(xCellOver, yCellOver, isAlive)
+      case None          => toggleInitState = Some(bufferCells.contains((xCellOver, yCellOver)))
+    }
   }
 
-  private def toggle(x: Int, y: Int): Unit = {
-    if (bufferCells.contains((x, y))) {
-      bufferCells -= ((x, y))
+  private def toggle(x: Int, y: Int, isAlive: Boolean): Unit = {
+    if (isAlive) {
       cells -= ((x, y))
-      draw(false)
+      bufferCells -= ((x, y))
+      draw(x, y, false)
     } else {
-      bufferCells += ((x, y))
       cells += ((x, y))
-      draw(true)
+      bufferCells += ((x, y))
+      draw(x, y, true)
     }
   }
 
@@ -125,15 +122,26 @@ class Applet extends PApplet {
   }
 
   private def drawCell(): Unit = {
-    draw(false)
+    fillColor(false)
     rect(0f, 0f, width.toFloat, height.toFloat)
 
     for {
       (x, y) <- bufferCells.iterator
     } {
-      draw(true)
-      rect((x * cellSize).toFloat, (y * cellSize).toFloat, cellSize, cellSize)
+      draw(x, y, true)
     }
+  }
+
+  private def draw(x: Int, y: Int, isAlive: Boolean): Unit = {
+    fillColor(isAlive)
+    rect((x * cellSize).toFloat, (y * cellSize).toFloat, cellSize, cellSize)
+  }
+
+  private def fillColor(isAlive: Boolean): Unit = {
+    fill(isAlive match {
+      case false => COLOR_DEAD
+      case true  => COLOR_ALIVE
+    })
   }
 
   private def saveCells(): Unit = {
@@ -147,8 +155,6 @@ class Applet extends PApplet {
   }
 
   def iteration(): Unit = {
-    saveCells()
-
     bufferCells.iterator.foreach {
       case (x, y) =>
         updateNeighbours(x, y, 1)
@@ -192,7 +198,12 @@ class Applet extends PApplet {
   }
 
   private def togglePause(): Unit = {
-    paused = !paused
+    if (paused) {
+      toggleInitState = None
+      paused = false
+    } else {
+      paused = true
+    }
   }
 
   private def clearAllCells(): Unit = {
