@@ -5,16 +5,17 @@ import processing.core.PApplet._
 import processing.core.PConstants._
 
 import scala.collection.mutable
+import scala.collection.parallel.mutable.{ParSet => MutableParSet}
 import scala.util.Random
 
 class Applet extends PApplet {
   private final val COLOR_ALIVE = color(24, 160, 167)
-  private final val COLOR_DEAD = color(0)
-  private final val COLOR_GRID = color(48)
+  private final val COLOR_DEAD  = color(0)
+  private final val COLOR_GRID  = color(48)
 
-  private final val cellSize = 4
-  private val cells: mutable.Set[(Int, Int)] = mutable.Set.empty
-  private val bufferCells: mutable.Set[(Int, Int)] = mutable.Set.empty
+  private final val cellSize                           = 5
+  private val cells: MutableParSet[(Int, Int)]         = MutableParSet.empty
+  private val bufferCells: MutableParSet[(Int, Int)]   = MutableParSet.empty
   private val countCells: mutable.Map[(Int, Int), Int] = mutable.Map.empty
 
   private var paused: Boolean = false
@@ -85,7 +86,7 @@ class Applet extends PApplet {
   private def draw(isAlive: Boolean): Unit = {
     fill(isAlive match {
       case false => COLOR_DEAD
-      case true => COLOR_ALIVE
+      case true  => COLOR_ALIVE
     })
   }
 
@@ -104,12 +105,12 @@ class Applet extends PApplet {
 
   private def toggle(x: Int, y: Int): Unit = {
     if (bufferCells.contains((x, y))) {
-      bufferCells.remove((x, y))
-      cells.remove((x, y))
+      bufferCells -= ((x, y))
+      cells -= ((x, y))
       draw(false)
     } else {
-      bufferCells.add((x, y))
-      cells.add((x, y))
+      bufferCells += ((x, y))
+      cells += ((x, y))
       draw(true)
     }
   }
@@ -146,9 +147,9 @@ class Applet extends PApplet {
   private def saveCells(): Unit = {
     bufferCells.clear()
     for {
-      (x, y) <- cells.iterator
+      (x, y) <- cells.par.iterator
     } {
-      bufferCells.add((x, y))
+      bufferCells += ((x, y))
     }
     countCells.clear()
   }
@@ -162,46 +163,46 @@ class Applet extends PApplet {
     }
 
     cells.clear()
-    countCells.foreach {
+    countCells.par.foreach {
       case ((x, y), neighbours) =>
         if (rule(bufferCells.contains((x, y)), neighbours)) {
-          cells.add((x, y))
+          cells += ((x, y))
         } else {
-          cells.remove((x, y))
+          cells - ((x, y))
         }
     }
   }
 
   final val rule: (Boolean, Int) => Boolean = (isAlive: Boolean, neighbours: Int) => {
     (isAlive, neighbours) match {
-      case (true, 2) => true
-      case (true, 3) => true
+      case (true, 2)  => true
+      case (true, 3)  => true
       case (false, 3) => true
-      case _ => false
+      case _          => false
     }
   }
 
   final val bounded: (Int, Int) => Seq[Int] = (current: Int, rangeMax: Int) => {
     val limit = rangeMax - 1
     current match {
-      case 0 => Array(current, current + 1)
+      case 0       => Array(current, current + 1)
       case `limit` => Array(current - 1, current)
-      case _ => Array(current - 1, current, current + 1)
+      case _       => Array(current - 1, current, current + 1)
     }
   }
 
   final val troidal: (Int, Int) => Seq[Int] = (current: Int, rangeMax: Int) => {
     val limit = rangeMax - 1
     current match {
-      case 0 => Array(rangeMax - 1, current, current + 1)
+      case 0       => Array(rangeMax - 1, current, current + 1)
       case `limit` => Array(current - 1, current, 0)
-      case _ => Array(current - 1, current, current + 1)
+      case _       => Array(current - 1, current, current + 1)
     }
   }
 
   final val boundaryProcessor = troidal
 
-  private final val rand: Random = new Random(java.security.SecureRandom.getInstanceStrong)
+  private final val rand: Random              = new Random(java.security.SecureRandom.getInstanceStrong)
   private final val probabilityOfAliveAtStart = 15
 
   private def initializeCells(): Unit = {
@@ -210,7 +211,7 @@ class Applet extends PApplet {
       (x, y) <- allCoordinates()
     } {
       if (rand.nextInt(100) <= probabilityOfAliveAtStart) {
-        cells.add((x, y))
+        cells += ((x, y))
       }
     }
   }
@@ -218,9 +219,9 @@ class Applet extends PApplet {
   override def keyPressed(): Unit = {
     key match {
       case 'r' | 'R' => initializeCells()
-      case ' ' => togglePause()
+      case ' '       => togglePause()
       case 'c' | 'C' => clearAllCells()
-      case _ => // do nothing
+      case _         => // do nothing
     }
   }
 
