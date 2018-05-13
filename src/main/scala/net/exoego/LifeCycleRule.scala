@@ -18,7 +18,7 @@ sealed trait BoundaryProcessor {
   def apply(current: Int, rangeMax: Int): Seq[Int]
 }
 
-case object Loop extends BoundaryProcessor {
+case object Bounded extends BoundaryProcessor {
   override def apply(current: Int, rangeMax: Int): Seq[Int] = {
     val limit = rangeMax - 1
     current match {
@@ -29,7 +29,7 @@ case object Loop extends BoundaryProcessor {
   }
 }
 
-case object Bounded extends BoundaryProcessor {
+case object Loop extends BoundaryProcessor {
   override def apply(current: Int, rangeMax: Int): Seq[Int] = {
     val limit = rangeMax - 1
     current match {
