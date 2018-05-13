@@ -9,12 +9,12 @@ import scala.util.Random
 
 class Applet extends PApplet {
   private final val COLOR_ALIVE = color(24, 160, 167)
-  private final val COLOR_DEAD  = color(0)
-  private final val COLOR_GRID  = color(48)
+  private final val COLOR_DEAD = color(0)
+  private final val COLOR_GRID = color(48)
 
-  private final val cellSize                           = 4
-  private val cells: mutable.Set[(Int, Int)]           = mutable.Set.empty
-  private val bufferCells: mutable.Set[(Int, Int)]     = mutable.Set.empty
+  private final val cellSize = 4
+  private val cells: mutable.Set[(Int, Int)] = mutable.Set.empty
+  private val bufferCells: mutable.Set[(Int, Int)] = mutable.Set.empty
   private val countCells: mutable.Map[(Int, Int), Int] = mutable.Map.empty
 
   private var paused: Boolean = false
@@ -23,8 +23,14 @@ class Applet extends PApplet {
 
   private def cols_ = height / cellSize
 
+  private val useFullScreen = false
+
   override def settings(): Unit = {
-    size(1600, 900, JAVA2D)
+    if (useFullScreen) {
+      fullScreen(JAVA2D)
+    } else {
+      size(1600, 900, JAVA2D)
+    }
     noSmooth()
   }
 
@@ -79,7 +85,7 @@ class Applet extends PApplet {
   private def draw(isAlive: Boolean): Unit = {
     fill(isAlive match {
       case false => COLOR_DEAD
-      case true  => COLOR_ALIVE
+      case true => COLOR_ALIVE
     })
   }
 
@@ -168,34 +174,34 @@ class Applet extends PApplet {
 
   final val rule: (Boolean, Int) => Boolean = (isAlive: Boolean, neighbours: Int) => {
     (isAlive, neighbours) match {
-      case (true, 2)  => true
-      case (true, 3)  => true
+      case (true, 2) => true
+      case (true, 3) => true
       case (false, 3) => true
-      case _          => false
+      case _ => false
     }
   }
 
   final val bounded: (Int, Int) => Seq[Int] = (current: Int, rangeMax: Int) => {
     val limit = rangeMax - 1
     current match {
-      case 0       => Array(current, current + 1)
+      case 0 => Array(current, current + 1)
       case `limit` => Array(current - 1, current)
-      case _       => Array(current - 1, current, current + 1)
+      case _ => Array(current - 1, current, current + 1)
     }
   }
 
   final val troidal: (Int, Int) => Seq[Int] = (current: Int, rangeMax: Int) => {
     val limit = rangeMax - 1
     current match {
-      case 0       => Array(rangeMax - 1, current, current + 1)
+      case 0 => Array(rangeMax - 1, current, current + 1)
       case `limit` => Array(current - 1, current, 0)
-      case _       => Array(current - 1, current, current + 1)
+      case _ => Array(current - 1, current, current + 1)
     }
   }
 
   final val boundaryProcessor = troidal
 
-  private final val rand: Random              = new Random(java.security.SecureRandom.getInstanceStrong)
+  private final val rand: Random = new Random(java.security.SecureRandom.getInstanceStrong)
   private final val probabilityOfAliveAtStart = 15
 
   private def initializeCells(): Unit = {
@@ -212,9 +218,9 @@ class Applet extends PApplet {
   override def keyPressed(): Unit = {
     key match {
       case 'r' | 'R' => initializeCells()
-      case ' '       => togglePause()
+      case ' ' => togglePause()
       case 'c' | 'C' => clearAllCells()
-      case _         => // do nothing
+      case _ => // do nothing
     }
   }
 
