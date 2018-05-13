@@ -1,10 +1,10 @@
 package net.exoego
 
+import java.util.concurrent.ConcurrentHashMap
+
 import processing.core.PApplet
 import processing.core.PApplet._
 import processing.core.PConstants._
-
-import java.util.concurrent.{ConcurrentHashMap => ConcurrentHashMap}
 
 import scala.collection.parallel.mutable.{ParSet => MutableParSet}
 import scala.util.Random
@@ -18,14 +18,14 @@ class Applet extends PApplet {
   private final val probabilityOfAliveAtStart = 15
   private final val useFullScreen             = true
 
-  private final val cells       = MutableParSet.empty[(Int, Int)]
-  private final val bufferCells = MutableParSet.empty[(Int, Int)]
-  private final val countCells  = new ConcurrentHashMap[(Int, Int), Int]()
+  private final val cells           = MutableParSet.empty[(Int, Int)]
+  private final val bufferCells     = MutableParSet.empty[(Int, Int)]
+  private final val neighbourCounts = new ConcurrentHashMap[(Int, Int), Int]()
 
   private final val lifecycleRule: LifeCycleRule         = Rule23_3
   private final val boundaryProcessor: BoundaryProcessor = Loop
 
-  private final val rand = new Random(java.security.SecureRandom.getInstanceStrong)
+  private final val rand  = new Random(java.security.SecureRandom.getInstanceStrong)
   private final val TITLE = "Game of Life"
 
   private var paused: Boolean = false
@@ -63,7 +63,7 @@ class Applet extends PApplet {
   override def draw(): Unit = {
     updateTitle(s"${frameRate.formatted("%.1f")} fps")
 
-    drawCell()
+    drawBoard()
 
     if (!paused) {
       saveCells()
@@ -88,36 +88,35 @@ class Applet extends PApplet {
   private var lastClickedIsAlive: Option[Boolean] = None
 
   private def toggleCellStateByMouseClick(): Unit = {
-    val xCellOver = {
-      val cellOver = map(mouseX.toFloat, 0f, width.toFloat, 0f, rows_.toFloat).toInt
-      constrain(cellOver, 0, rows_ - 1)
+    def mousePositionToCoordinate(v: Int, max: Int, elements: Int): Int = {
+      val cellOver = map(v.toFloat, 0f, max.toFloat, 0f, elements.toFloat).toInt
+      constrain(cellOver, 0, elements - 1)
     }
-    val yCellOver = {
-      val cellOver = map(mouseY.toFloat, 0f, height.toFloat, 0f, cols_.toFloat).toInt
-      constrain(cellOver, 0, cols_ - 1)
-    }
+
+    val clickedX = mousePositionToCoordinate(mouseX, width, rows_)
+    val clickedY = mousePositionToCoordinate(mouseY, height, cols_)
 
     val isAlive = lastClickedIsAlive match {
       case Some(lastIsAlive) => lastIsAlive
       case None =>
-        val isAlive = bufferCells.contains((xCellOver, yCellOver))
+        val isAlive = bufferCells.contains((clickedX, clickedY))
         lastClickedIsAlive = Some(isAlive)
         isAlive
     }
 
-    def toggle(x: Int, y: Int, isAlive: Boolean): Unit = {
-      if (isAlive) {
-        cells -= ((x, y))
-        bufferCells -= ((x, y))
-        draw(x, y, false)
-      } else {
-        cells += ((x, y))
-        bufferCells += ((x, y))
-        draw(x, y, true)
-      }
-    }
+    toggle(clickedX, clickedY, isAlive)
+  }
 
-    toggle(xCellOver, yCellOver, isAlive)
+  private def toggle(x: Int, y: Int, isAlive: Boolean): Unit = {
+    if (isAlive) {
+      cells -= ((x, y))
+      bufferCells -= ((x, y))
+      drawCell(x, y, false)
+    } else {
+      cells += ((x, y))
+      bufferCells += ((x, y))
+      drawCell(x, y, true)
+    }
   }
 
   private def updateNeighbours(x: Int, y: Int, n: Int): Unit = {
@@ -128,24 +127,24 @@ class Applet extends PApplet {
       xx <- boundaryProcessor(x, rows)
       yy <- boundaryProcessor(y, cols) if !(xx == x && yy == y)
     } {
-      countCells.compute((xx, yy), (_, old) => {
+      neighbourCounts.compute((xx, yy), (_, old) => {
         old + n
       })
     }
   }
 
-  private def drawCell(): Unit = {
+  private def drawBoard(): Unit = {
     fillColor(false)
     rect(0f, 0f, width.toFloat, height.toFloat)
 
     for {
       (x, y) <- bufferCells.iterator
     } {
-      draw(x, y, true)
+      drawCell(x, y, true)
     }
   }
 
-  private def draw(x: Int, y: Int, isAlive: Boolean): Unit = {
+  private def drawCell(x: Int, y: Int, isAlive: Boolean): Unit = {
     fillColor(isAlive)
     rect((x * cellSize).toFloat, (y * cellSize).toFloat, cellSize, cellSize)
   }
@@ -165,7 +164,7 @@ class Applet extends PApplet {
     } {
       bufferCells += ((x, y))
     }
-    countCells.clear()
+    neighbourCounts.clear()
   }
 
   private def iteration(): Unit = {
@@ -175,7 +174,7 @@ class Applet extends PApplet {
     }
 
     cells.clear()
-    countCells.entrySet().forEach { t =>
+    neighbourCounts.entrySet().forEach { t =>
       val coordinate = t.getKey
       val neighbours = t.getValue
       if (lifecycleRule(bufferCells.contains(coordinate), neighbours)) {
@@ -203,7 +202,6 @@ class Applet extends PApplet {
     }
   }
 
-
   private def togglePause(): Unit = {
     paused = !paused
   }
@@ -211,6 +209,6 @@ class Applet extends PApplet {
   private def clearAllCells(): Unit = {
     cells.clear()
     bufferCells.clear()
-    countCells.clear()
+    neighbourCounts.clear()
   }
 }
