@@ -70,11 +70,12 @@ class Applet extends PApplet {
     } else if (mousePressed) {
       toggleCellStateByMouseClick()
     } else {
+      lastClickedIsAlive = None
       saveCells()
     }
   }
 
-  private var toggleInitState: Option[Boolean] = None
+  private var lastClickedIsAlive: Option[Boolean] = None
 
   private def toggleCellStateByMouseClick(): Unit = {
     val xCellOver = {
@@ -86,10 +87,14 @@ class Applet extends PApplet {
       constrain(cellOver, 0, cols_ - 1)
     }
 
-    toggleInitState match {
-      case Some(isAlive) => toggle(xCellOver, yCellOver, isAlive)
-      case None          => toggleInitState = Some(bufferCells.contains((xCellOver, yCellOver)))
+    val isAlive = lastClickedIsAlive match {
+      case Some(lastIsAlive) => lastIsAlive
+      case None =>
+        val isAlive = bufferCells.contains((xCellOver, yCellOver))
+        lastClickedIsAlive = Some(isAlive)
+        isAlive
     }
+    toggle(xCellOver, yCellOver, isAlive)
   }
 
   private def toggle(x: Int, y: Int, isAlive: Boolean): Unit = {
@@ -198,12 +203,7 @@ class Applet extends PApplet {
   }
 
   private def togglePause(): Unit = {
-    if (paused) {
-      toggleInitState = None
-      paused = false
-    } else {
-      paused = true
-    }
+    paused = !paused
   }
 
   private def clearAllCells(): Unit = {
