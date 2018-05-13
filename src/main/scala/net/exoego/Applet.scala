@@ -25,7 +25,8 @@ class Applet extends PApplet {
   private final val lifecycleRule: LifeCycleRule         = Rule23_3
   private final val boundaryProcessor: BoundaryProcessor = Loop
 
-  private final val rand: Random = new Random(java.security.SecureRandom.getInstanceStrong)
+  private final val rand = new Random(java.security.SecureRandom.getInstanceStrong)
+  private final val TITLE = "Game of Life"
 
   private var paused: Boolean = false
 
@@ -42,8 +43,6 @@ class Applet extends PApplet {
     noSmooth()
   }
 
-  private val TITLE: String = "Game of Life"
-
   private def updateTitle(fps: String = null): Unit = {
     if (fps == null) {
       surface.setTitle(s"${TITLE}")
@@ -53,10 +52,11 @@ class Applet extends PApplet {
   }
 
   override def setup(): Unit = {
-    updateTitle()
     frameRate(30)
     stroke(COLOR_GRID)
     background(COLOR_DEAD)
+
+    updateTitle()
     initializeCells()
   }
 
@@ -73,6 +73,15 @@ class Applet extends PApplet {
     } else {
       lastClickedIsAlive = None
       saveCells()
+    }
+  }
+
+  override def keyPressed(): Unit = {
+    key match {
+      case 'r' | 'R' => initializeCells()
+      case ' '       => togglePause()
+      case 'c' | 'C' => clearAllCells()
+      case _         => // do nothing
     }
   }
 
@@ -95,19 +104,20 @@ class Applet extends PApplet {
         lastClickedIsAlive = Some(isAlive)
         isAlive
     }
-    toggle(xCellOver, yCellOver, isAlive)
-  }
 
-  private def toggle(x: Int, y: Int, isAlive: Boolean): Unit = {
-    if (isAlive) {
-      cells -= ((x, y))
-      bufferCells -= ((x, y))
-      draw(x, y, false)
-    } else {
-      cells += ((x, y))
-      bufferCells += ((x, y))
-      draw(x, y, true)
+    def toggle(x: Int, y: Int, isAlive: Boolean): Unit = {
+      if (isAlive) {
+        cells -= ((x, y))
+        bufferCells -= ((x, y))
+        draw(x, y, false)
+      } else {
+        cells += ((x, y))
+        bufferCells += ((x, y))
+        draw(x, y, true)
+      }
     }
+
+    toggle(xCellOver, yCellOver, isAlive)
   }
 
   private def updateNeighbours(x: Int, y: Int, n: Int): Unit = {
@@ -141,9 +151,10 @@ class Applet extends PApplet {
   }
 
   private def fillColor(isAlive: Boolean): Unit = {
-    fill(isAlive match {
-      case false => COLOR_DEAD
-      case true  => COLOR_ALIVE
+    fill(if (isAlive) {
+      COLOR_ALIVE
+    } else {
+      COLOR_DEAD
     })
   }
 
@@ -157,7 +168,7 @@ class Applet extends PApplet {
     countCells.clear()
   }
 
-  def iteration(): Unit = {
+  private def iteration(): Unit = {
     bufferCells.foreach {
       case (x, y) =>
         updateNeighbours(x, y, 1)
@@ -192,14 +203,6 @@ class Applet extends PApplet {
     }
   }
 
-  override def keyPressed(): Unit = {
-    key match {
-      case 'r' | 'R' => initializeCells()
-      case ' '       => togglePause()
-      case 'c' | 'C' => clearAllCells()
-      case _         => // do nothing
-    }
-  }
 
   private def togglePause(): Unit = {
     paused = !paused
