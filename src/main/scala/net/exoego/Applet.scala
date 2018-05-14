@@ -22,8 +22,8 @@ class Applet extends PApplet {
   private final val bufferCells     = MutableParSet.empty[(Int, Int)]
   private final val neighbourCounts = new ConcurrentHashMap[(Int, Int), Int]()
 
-  private final val lifecycleRule: LifeCycleRule         = Rule23_3
-  private final val boundaryProcessor: BoundaryProcessor = Loop
+  private final val lifecycleRule: LifeCycleRule         = LifeCycleRule.Conway
+  private final val boundaryProcessor: BoundaryProcessor = BoundaryProcessor.Loop
 
   private final val rand  = new Random(java.security.SecureRandom.getInstanceStrong)
   private final val TITLE = "Game of Life"
